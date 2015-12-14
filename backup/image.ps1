@@ -48,6 +48,7 @@ $handler_label2_Click=
 $button2_OnClick= 
 {
 #TODO: Place custom script here
+$form3.Close()
 
 }
 
@@ -60,7 +61,15 @@ $handler_label1_Click=
 $handler_button1_Click= 
 {
 #TODO: Place custom script here
+$textBox2.Text # Destination
+$textBox1.Text # Source
+if(($textBox1.Text.length -gt 2) -and ($textBox2.Text.length -gt 2)){
+# Do Nothing
 
+}else{
+[string]$imagedest = $textBox2.Text # Destination
+[string]$imagesource = $textBox1.Text # Source
+wbAdmin start backup -backupTarget:$imagedest -include:$imagesource -allCritical -quiet
 }
 
 $OnLoadForm_StateCorrection=
@@ -191,7 +200,7 @@ $System_Drawing_Size.Height = 23
 $System_Drawing_Size.Width = 139
 $label1.Size = $System_Drawing_Size
 $label1.TabIndex = 0
-$label1.Text = "Nur von Partition in Partition"
+$label1.Text = "Nur von Partition in Partition. Z.B. E:"
 $label1.add_Click($handler_label1_Click)
 
 $form3.Controls.Add($label1)

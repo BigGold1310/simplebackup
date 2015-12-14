@@ -114,7 +114,9 @@ $button5_OnClick=
 		# Erstelle Shortcut
 		CreateShortcut
 		#Backup starten
-		Backup($source, $destination, $mode)
+		$destination = $destination + "\fullbackup"
+		$newdestination = CreateBackupFolder $destination 0
+		Backup $source $newdestination[0] 0
 		
 		
 		$form1.Close()
@@ -555,6 +557,8 @@ $form1.ShowDialog()| Out-Null
 if ((CheckIfConfigExist($configPath) -eq $true) -and -not((Get-Content $configPath) -eq $null)){
 	# Open Config Loading Script, Open New GUI depending on Config Options!
 	$config = Get-Content C:\Backup\config.txt
+	$source = $config[0]
+	$path = $config[1]
 	$mode = $config[2]
 	
 	# Öffne Backup Hinweis!

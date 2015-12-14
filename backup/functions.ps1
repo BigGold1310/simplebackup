@@ -38,8 +38,7 @@ function CheckIfDirectoryExists($mydirectory){
 # Funktionen für das Backup
 function CreateBackupFolder($mytempdestination, $job){
 	# 0 = Full, 1 = Inkremental, 2 = Differential
-	Write-Host $mytempdestination
-	if ($mytempdestination -gt 3){
+	if ($mytempdestination.Length -gt 3){
 		if($job -eq 0){
 				$mytempdestination = $mytempdestination + "\backup\fullbackup"
 				$tempdestinationcount = (Get-ChildItem -Path $mytempdestination -Directory).count
@@ -82,31 +81,36 @@ function CreateBackupFolder($mytempdestination, $job){
 	}
 }
 
-function BackupFolder($path, $destination, $mode){
+function BackupFolder($path, $destination, $myjob){
 	# Debuging! Write-Host $path
-	Backup $path $destination $mode
+	Backup $path $destination $myjob
 }
-function Backup($source, $destination, $mode){
+function Backup($source, $destination, $myjob){
+Write-Host $destination
 	$files = Get-ChildItem -Path $source -File
 	$folders = Get-ChildItem -Path $source -Directory
 	foreach ($file in $files){
 		# Debuging! Write-Host $file.FullName
-		$tempdestination = $file.FullName.Remove(0,$config[0].length)
-		if($mode -eq 2){
+		if($myjob -eq 2){
+		# Differentiel
 			# KEINE Archiv bits entfernen!
 			If((Get-ItemProperty -Path $file.fullname).attributes -band $attribute){
 				# Wenn archiv bit vorhanden dann
-				
+				Copy-Item $file.FullName -Destination $destination
+			}else{
+			# Do Nothing
 			}
-		}elseif($mode -eq 0){		
-			$tempfile = $destination + "\" + $file
+		}elseif($myjob -eq 0){
+			$filename = $file.Name
+			$tempfile = $destination + "\" + $filename
+			Write-Host $tempfile
 			# Full Backup
 			if(Test-Path $tempfile){
 				If((Get-ItemProperty -Path $file.fullname).attributes -band $attribute){
 					# Wenn archiv bit vorhanden dann
-					# Noting to do
-				}else{
 					Set-ItemProperty -Path $file.FullName -Name attributes -Value ((Get-ItemProperty $file.FullName).attributes -BXOR $attribute)
+				}else{
+					# Noting to do
 				}
 			}else{
 				Copy-Item $file.FullName -Destination $destination
@@ -116,6 +120,10 @@ function Backup($source, $destination, $mode){
 			# Archive bit muss entfernt werden!
 			If((Get-ItemProperty -Path $file.fullname).attributes -band $attribute){
 				# Wenn archiv bit vorhanden dann
+				Copy-Item $file.FullName -Destination $destination
+				Set-ItemProperty -Path $file.FullName -Name attributes -Value ((Get-ItemProperty $file.FullName).attributes -BXOR $attribute)
+			}else{
+				# Nothing to do
 			}
 		}
 	}
@@ -124,11 +132,12 @@ function Backup($source, $destination, $mode){
 		$newdestpath = $destination + "\" + $folder.Name
 		
 		# Erstelle Ordner falls noch nicht existiert
-		CheckIfDirectoryExists($newdestpath)
+		CheckIfDirectoryExists $newdestpath
 		
 		# Entferne Bit von Ordner!
-		Set-ItemProperty -Path $folder.FullName -Name attributes -Value ((Get-ItemProperty $folder.FullName).attributes -BXOR $attribute)
-		BackupFolder $folder.FullName $newdestpath $mode
+		# Ordner haben kein Archiv bit!
+		# Set-ItemProperty -Path $folder.FullName -Name attributes -Value ((Get-ItemProperty $folder.FullName).attributes -BXOR $attribute)
+		BackupFolder $folder.FullName $newdestpath $myjob
 	}
 }
 
